@@ -1,5 +1,11 @@
-import { IsString, IsArray, IsNumber, IsObject, IsOptional } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsArray,
+  IsNumber,
+  IsObject,
+  IsOptional,
+} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateQuizDto {
   @ApiProperty()
@@ -27,4 +33,19 @@ export class CreateQuizDto {
   @ApiProperty()
   @IsObject()
   config: Record<string, any>;
+}
+
+export class StartQuizDto {
+  @ApiProperty()
+  @IsNumber()
+  numQuestions: number;
+
+  @ApiProperty()
+  @IsArray()
+  subTopicIds: string[];
+
+  @ApiProperty({ required: false })
+  @IsArray()
+  @IsOptional()
+  questionTypeIds?: string[];
 }

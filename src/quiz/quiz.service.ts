@@ -1,10 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateQuizDto } from './dto/create-quiz.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateQuizDto, StartQuizDto } from "./dto/create-quiz.dto";
 
 @Injectable()
-export class QuizzesService {
+export class QuizService {
   constructor(private prisma: PrismaService) {}
+
+  async startQuiz(startQuizDto: StartQuizDto) {
+    const questions = await this.prisma.question.findMany({
+      where: {
+        subTopics: {
+          some: {
+            id: {
+              in: startQuizDto.subTopicIds,
+            },
+          },
+        },
+        ...(startQuizDto.questionTypeIds && {
+          typeId: {
+            in: startQuizDto.questionTypeIds,
+          },
+        }),
+      },
+      take: startQuizDto.numQuestions,
+    });
+    return questions;
+  }
 
   async createQuiz(createQuizDto: CreateQuizDto) {
     // Get questions based on criteria
@@ -82,7 +103,7 @@ export class QuizzesService {
 
   async submitQuizResults(
     quizId: string,
-    results: { userId: string; answers: any; score: number },
+    results: { userId: string; answers: any; score: number }
   ) {
     return this.prisma.quizResult.create({
       data: {
