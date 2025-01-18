@@ -42,6 +42,7 @@ export class StartQuizDto {
 
   @ApiProperty()
   @IsArray()
+  @IsOptional()
   subTopicIds: string[];
 
   @ApiProperty({ required: false })

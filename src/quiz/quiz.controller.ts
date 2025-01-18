@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { QuizService } from "./quiz.service";
-import { StartQuizDto } from "./dto/create-quiz.dto";
+import { StartQuizDto } from "./dto/start-quiz.dto";
 
 @ApiTags("quiz")
 @Controller("quiz")

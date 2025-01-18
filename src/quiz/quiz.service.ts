@@ -1,30 +1,67 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { shuffle } from "lodash";
+
 import { PrismaService } from "../prisma/prisma.service";
-import { CreateQuizDto, StartQuizDto } from "./dto/create-quiz.dto";
+import { CreateQuizDto, StartQuizDto } from "./dto/start-quiz.dto";
+
+enum QuestionType {
+  MultipleChoice = "multiple_choice_single",
+}
+
+export interface QuizQuestionsData {
+  id: string;
+  question: string;
+  options: {
+    [key: string]: string;
+  };
+  type: QuestionType;
+  correctAnswer: number[];
+  explanation?: string;
+}
 
 @Injectable()
 export class QuizService {
   constructor(private prisma: PrismaService) {}
 
-  async startQuiz(startQuizDto: StartQuizDto) {
-    const questions = await this.prisma.question.findMany({
+  async startQuiz(startQuizDto: StartQuizDto): Promise<QuizQuestionsData[]> {
+    let { subTopicIds, questionTypeIds, numQuestions } = startQuizDto;
+    subTopicIds = [];
+    questionTypeIds = [];
+    const allQuestions = await this.prisma.question.findMany({
       where: {
-        subTopics: {
-          some: {
-            id: {
-              in: startQuizDto.subTopicIds,
+        ...(subTopicIds &&
+          subTopicIds.length > 0 && {
+            subTopics: {
+              some: {
+                id: {
+                  in: subTopicIds,
+                },
+              },
             },
-          },
-        },
-        ...(startQuizDto.questionTypeIds && {
-          typeId: {
-            in: startQuizDto.questionTypeIds,
-          },
-        }),
+          }),
+        ...(questionTypeIds &&
+          questionTypeIds.length > 0 && {
+            typeId: {
+              in: questionTypeIds,
+            },
+          }),
       },
-      take: startQuizDto.numQuestions,
     });
-    return questions;
+
+    // Shuffle the questions randomly
+    const shuffledQuestions = shuffle(allQuestions);
+
+    // Take the specified number of questions
+    const selectedQuestions = shuffledQuestions.slice(0, numQuestions);
+
+    return selectedQuestions.map((questionData) => ({
+      id: questionData.id,
+      question: questionData.questionText,
+      options: (questionData?.options as { [key: string]: string }) || {},
+      type: QuestionType.MultipleChoice,
+      correctAnswer: questionData.correctAnswer as number[],
+      explanation: questionData.explanation || undefined,
+    }));
   }
 
   async createQuiz(createQuizDto: CreateQuizDto) {
